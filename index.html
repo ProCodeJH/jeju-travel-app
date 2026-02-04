@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#FFFFFF">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="description" content="제주도 여행 가이드 - 2박3일 플래너">
+
+    <title>제주 여행</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/browser-image-compression@2.0.2/dist/browser-image-compression.min.js"></script>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInAnonymously, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase config - 예진&자현 제주 여행 앱
+        const firebaseConfig = {
+            apiKey: "AIzaSyDemo-Key-Replace-With-Real",
+            authDomain: "jeju-travel-app.firebaseapp.com",
+            projectId: "jeju-travel-app",
+            storageBucket: "jeju-travel-app.appspot.com",
+            messagingSenderId: "123456789",
+            appId: "1:123456789:web:abcdef123456"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Export to global scope for app.js
+        window.firebaseAuth = auth;
+        window.firebaseDb = db;
+        window.firebaseSignIn = signInAnonymously;
+        window.firebaseDoc = doc;
+        window.firebaseSetDoc = setDoc;
+        window.firebaseGetDoc = getDoc;
+        window.firebaseOnSnapshot = onSnapshot;
+        window.firebaseOnAuthStateChanged = onAuthStateChanged;
+    </script>
+
+    <!-- Kakao Map SDK -->
+    <script type="text/javascript"
+        src="//dapi.kakao.com/v2/maps/sdk.js?appkey=DEMO_KAKAO_KEY&libraries=services"></script>
+</head>
+
+<body>
+    <!-- Splash Screen -->
+    <div id="splashScreen" class="splash-screen">
+        <div class="splash-content">
+            <div class="splash-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 2L11 13" />
+                    <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+                </svg>
+            </div>
+            <h1 class="splash-title">제주 여행</h1>
+            <p class="splash-subtitle">예진 ♥ 자현</p>
+            <div class="splash-loader">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-top">
+            <div class="header-left">
+                <span class="explore-label">탐험하기</span>
+                <h1 class="explore-title">제주도</h1>
+                <p class="explore-subtitle">예진 ♥ 자현 첫 비행기 여행</p>
+            </div>
+            <div class="header-buttons">
+                <button class="theme-toggle" id="themeToggle" aria-label="테마 변경">
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5" />
+                        <line x1="12" y1="1" x2="12" y2="3" />
+                        <line x1="12" y1="21" x2="12" y2="23" />
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                        <line x1="1" y1="12" x2="3" y2="12" />
+                        <line x1="21" y1="12" x2="23" y2="12" />
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                    </svg>
+                </button>
+                <button class="share-btn" id="shareBtn" aria-label="공유하기">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="18" cy="5" r="3" />
+                        <circle cx="6" cy="12" r="3" />
+                        <circle cx="18" cy="19" r="3" />
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" />
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
+                    </svg>
+                </button>
+                <button class="map-btn" id="mapBtn" aria-label="지도 보기">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                        <circle cx="12" cy="10" r="3" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="search-container">
+            <div class="search-bar">
+                <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input type="text" class="search-input" placeholder="장소 검색...">
+            </div>
+        </div>
+
+        <!-- Weather Widget -->
+        <div class="weather-widget" id="weatherWidget">
+            <div class="weather-icon">🌤️</div>
+            <div class="weather-info">
+                <span class="weather-temp">18°C</span>
+                <span class="weather-desc">제주 맑음</span>
+            </div>
+            <div class="weather-detail">
+                <span>💧 65%</span>
+                <span>🌬️ 12km/h</span>
+            </div>
+        </div>
+
+        <!-- Category Chips -->
+        <div class="category-chips">
+            <button class="chip active" data-filter="all">
+                <span class="chip-dot"></span>
+                전체
+            </button>
+            <button class="chip" data-filter="spot">관광지</button>
+            <button class="chip" data-filter="food">맛집</button>
+            <button class="chip" data-filter="cafe">카페</button>
+            <button class="chip" data-filter="flight">이동</button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="app-main">
+        <!-- Popular Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">나의 일정</h2>
+                <button class="section-link" id="addDayBtn">+ 추가</button>
+            </div>
+
+            <div class="popular-cards" id="dayCardsContainer">
+                <!-- Day cards will be rendered by JS -->
+            </div>
+        </section>
+
+        <!-- Schedule Sections -->
+        <div id="scheduleSections">
+            <!-- Day schedule sections will be rendered by JS -->
+        </div>
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+        </button>
+        <button class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+        </button>
+        <button class="nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path
+                    d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+            </svg>
+        </button>
+    </nav>
+
+    <!-- Place Registry Modal -->
+    <div class="modal-overlay" id="placeRegistryModal">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h3 class="modal-title" id="placeRegistryTitle">장소 등록</h3>
+                <button class="modal-close" onclick="closePlaceRegistry()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+
+            <div class="place-registry-content">
+                <div class="place-add-form">
+                    <input type="text" id="newPlaceName" placeholder="장소명을 입력하세요">
+                    <button class="add-place-btn" onclick="addPlace()">추가</button>
+                </div>
+
+                <div class="place-list" id="placeList">
+                    <!-- Places will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Schedule Modal -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title">일정 추가</h3>
+                <button class="modal-close" id="closeModal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+
+            <form class="modal-form" id="scheduleForm">
+                <input type="hidden" id="targetDay" value="">
+
+                <div class="form-field">
+                    <label>시간</label>
+                    <input type="time" id="scheduleTime" required>
+                </div>
+
+                <div class="form-field">
+                    <label>장소</label>
+                    <input type="text" id="scheduleLocation" placeholder="장소명을 입력하세요" required>
+                </div>
+
+                <div class="form-field">
+                    <label>카테고리</label>
+                    <div class="type-grid" id="typeSelector">
+                        <button type="button" class="type-btn active" data-type="spot">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                                <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            관광지
+                        </button>
+                        <button type="button" class="type-btn" data-type="food">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+                                <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+                            </svg>
+                            맛집
+                        </button>
+                        <button type="button" class="type-btn" data-type="cafe">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+                                <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
+                            </svg>
+                            카페
+                        </button>
+                        <button type="button" class="type-btn" data-type="flight">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M22 2L11 13" />
+                                <path d="M22 2l-7 20-4-9-9-4 20-7z" />
+                            </svg>
+                            이동
+                        </button>
+                    </div>
+                    <input type="hidden" id="scheduleType" value="spot">
+                </div>
+
+                <div class="form-field">
+                    <label>메모 (선택)</label>
+                    <input type="text" id="scheduleNote" placeholder="메모를 입력하세요...">
+                </div>
+
+                <div class="form-field">
+                    <label>지도 링크 (선택)</label>
+                    <input type="url" id="scheduleLink" placeholder="https://map.naver.com/...">
+                </div>
+
+                <button type="submit" class="submit-btn">일정 추가하기</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal detail-modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="detail-title">장소명</h3>
+                <button class="modal-close" id="closeDetail">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="detail-content">
+                <div class="detail-row">
+                    <span class="detail-label">시간</span>
+                    <span class="detail-value" id="detail-time">00:00</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">카테고리</span>
+                    <span class="detail-value" id="detail-type">관광지</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">상태</span>
+                    <span class="detail-value detail-status" id="detail-status">대기중</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">메모</span>
+                    <span class="detail-value" id="detail-note">-</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Day Modal -->
+    <div class="modal-overlay" id="editDayModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 class="modal-title" id="editDayTitle">일정 편집</h3>
+                <button class="modal-close" id="closeEditDay">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+
+            <form class="modal-form" id="editDayForm">
+                <input type="hidden" id="editDayKey" value="">
+
+                <div class="form-field">
+                    <label>제목</label>
+                    <input type="text" id="editDayName" placeholder="일정 제목" required>
+                </div>
+
+                <div class="form-field">
+                    <label>대표 사진</label>
+                    <div class="photo-upload-area" id="dayPhotoPreview">
+                        <span>사진을 선택하세요</span>
+                    </div>
+                    <input type="file" id="editDayPhoto" accept="image/*" hidden>
+                </div>
+
+                <div class="form-field">
+                    <label>
+                        사진첩
+                        <small id="albumPhotoCount">(0장)</small>
+                    </label>
+                    <div class="album-container">
+                        <div class="album-grid" id="albumGrid">
+                            <!-- Photos will be rendered here -->
+                        </div>
+                        <label class="album-add-btn">
+                            <input type="file" accept="image/*" multiple onchange="addAlbumPhotos(this.files)" hidden>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <line x1="5" y1="12" x2="19" y2="12" />
+                            </svg>
+                            사진 추가
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="submit-btn">저장</button>
+                    <button type="button" class="delete-day-btn" id="deleteDayBtn">삭제</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Photo Viewer Modal -->
+    <div class="modal-overlay" id="photoViewerModal">
+        <div class="photo-viewer">
+            <button class="photo-viewer-close" onclick="closePhotoViewer()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+            </button>
+            <img id="photo-viewer-img" src="" alt="사진">
+            <button class="photo-delete-btn" onclick="deleteAlbumPhoto()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6" />
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+                삭제
+            </button>
+        </div>
+    </div>
+
+    <!-- Map Modal -->
+    <div class="modal-overlay" id="mapModal">
+        <div class="modal map-modal">
+            <div class="modal-header">
+                <h2 class="modal-title">🗺️ 제주 여행 지도</h2>
+                <button class="modal-close" onclick="closeMapModal()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+                <div id="kakaoMap" style="width: 100%; height: 60vh;"></div>
+            </div>
+            <div class="map-legend">
+                <span class="legend-item"><span class="legend-dot spot"></span> 관광지</span>
+                <span class="legend-item"><span class="legend-dot food"></span> 맛집</span>
+                <span class="legend-item"><span class="legend-dot cafe"></span> 카페</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Floating Action Button -->
+    <div class="fab-container">
+        <button class="fab-main" id="fabMain">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+        </button>
+        <div class="fab-menu" id="fabMenu">
+            <button class="fab-item" onclick="openChecklist()" title="체크리스트">
+                <span>✓</span>
+            </button>
+            <button class="fab-item" onclick="openBudgetCalc()" title="예산 계산기">
+                <span>💰</span>
+            </button>
+            <button class="fab-item" onclick="refreshWeather()" title="날씨 새로고침">
+                <span>🌤️</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Checklist Modal -->
+    <div class="modal-overlay" id="checklistModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">✓ 여행 체크리스트</h2>
+                <button class="modal-close" onclick="closeChecklist()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="checklist" id="travelChecklist">
+                    <!-- Dynamic content -->
+                </div>
+                <div class="checklist-add">
+                    <input type="text" id="newCheckItem" placeholder="새 항목 추가...">
+                    <button onclick="addCheckItem()">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Budget Calculator Modal -->
+    <div class="modal-overlay" id="budgetModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">💰 여행 예산</h2>
+                <button class="modal-close" onclick="closeBudgetCalc()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="budget-summary">
+                    <div class="budget-total" id="budgetTotal">₩0</div>
+                    <div class="budget-label">예상 총 비용</div>
+                </div>
+                <div class="budget-items" id="budgetItems">
+                    <!-- Dynamic content -->
+                </div>
+                <div class="budget-add">
+                    <input type="text" id="budgetItemName" placeholder="항목명">
+                    <input type="number" id="budgetItemAmount" placeholder="금액">
+                    <select id="budgetItemCategory">
+                        <option value="flight">✈️ 항공</option>
+                        <option value="stay">🏨 숙소</option>
+                        <option value="food">🍽️ 식비</option>
+                        <option value="activity">🎢 액티비티</option>
+                        <option value="other">📦 기타</option>
+                    </select>
+                    <button onclick="addBudgetItem()">+</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

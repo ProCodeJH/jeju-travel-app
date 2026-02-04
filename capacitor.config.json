@@ -1,0 +1,20 @@
+{
+  "appId": "com.yejin.jeju",
+  "appName": "제주 여행",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#176FF2",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
+    }
+  },
+  "android": {
+    "backgroundColor": "#176FF2"
+  }
+}

@@ -1176,6 +1176,62 @@ window.addPlace = addPlace;
 window.deletePlace = deletePlace;
 
 // ============================================
+// MAP MODAL
+// ============================================
+let kakaoMapInstance = null;
+
+function openMapModal() {
+    const modal = document.getElementById('mapModal');
+    modal?.classList.add('active');
+
+    // Initialize Kakao Map if not already
+    setTimeout(() => {
+        if (!kakaoMapInstance && typeof kakao !== 'undefined') {
+            const container = document.getElementById('kakaoMap');
+            if (container) {
+                const options = {
+                    center: new kakao.maps.LatLng(33.4996, 126.5312), // Jeju center
+                    level: 9
+                };
+                kakaoMapInstance = new kakao.maps.Map(container, options);
+
+                // Add markers for key locations
+                const locations = [
+                    { lat: 33.5097, lng: 126.5219, title: '제주공항', type: 'flight' },
+                    { lat: 33.2891, lng: 126.1685, title: '오설록 티뮤지엄', type: 'spot' },
+                    { lat: 33.2448, lng: 126.4115, title: '중문관광단지', type: 'spot' },
+                    { lat: 33.4584, lng: 126.9423, title: '성산일출봉', type: 'spot' }
+                ];
+
+                locations.forEach(loc => {
+                    const marker = new kakao.maps.Marker({
+                        position: new kakao.maps.LatLng(loc.lat, loc.lng),
+                        map: kakaoMapInstance
+                    });
+
+                    const infowindow = new kakao.maps.InfoWindow({
+                        content: `<div style="padding:5px;font-size:12px;">${loc.title}</div>`
+                    });
+
+                    kakao.maps.event.addListener(marker, 'click', () => {
+                        infowindow.open(kakaoMapInstance, marker);
+                    });
+                });
+            }
+        } else if (kakaoMapInstance) {
+            kakaoMapInstance.relayout();
+        }
+    }, 300);
+}
+
+function closeMapModal() {
+    document.getElementById('mapModal')?.classList.remove('active');
+}
+
+window.openMapModal = openMapModal;
+window.closeMapModal = closeMapModal;
+
+// ============================================
 // TRAVEL TOOLS (FAB, Checklist, Budget, Weather)
 // ============================================
 let checklistItems = JSON.parse(localStorage.getItem('jejuChecklist') || '[]');
